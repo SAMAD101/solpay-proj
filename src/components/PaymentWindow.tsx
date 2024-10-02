@@ -7,6 +7,7 @@ import {
   ModalBody,
   Text,
   Box,
+  Image
 } from '@chakra-ui/react';
 import {
   createQR,
@@ -22,6 +23,7 @@ import {
   Connection,
   clusterApiUrl,
 } from '@solana/web3.js';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface Product {
   id: number;
@@ -43,7 +45,7 @@ const PaymentWindow: React.FC<PaymentWindowProps> = ({
   onClose,
 }) => {
   const [timeLeft, setTimeLeft] = useState(60); // 60 seconds countdown
-  const qrRef = useRef<HTMLDivElement>(null);
+  const [solanaUrl, setSolanaUrl] = useState<string>('');
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>(
     'pending'
   );
@@ -66,15 +68,9 @@ const PaymentWindow: React.FC<PaymentWindowProps> = ({
       memo,
     };
 
-    const solanaUrl = encodeURL(urlParams);
-    console.log('Solana Pay URL:', solanaUrl.toString());
-
-    // Generate QR code
-    if (qrRef.current) {
-      qrRef.current.innerHTML = ''; // Clear previous QR code
-      const qr = createQR(solanaUrl, 256, 'transparent');
-      qr.append(qrRef.current);
-    }
+    const solanaUrlInstance = encodeURL(urlParams);
+    console.log('Solana Pay URL:', solanaUrlInstance.toString());
+    setSolanaUrl(solanaUrlInstance.toString());
 
     // Create a connection to the Solana cluster
     const connection = new Connection(clusterApiUrl('mainnet-beta')); // Use 'devnet' if testing
@@ -139,7 +135,11 @@ const PaymentWindow: React.FC<PaymentWindowProps> = ({
                 Complete your payment within {timeLeft} seconds
               </Text>
               <Box display="flex" justifyContent="center" mb={4}>
-                <div ref={qrRef} />
+                {solanaUrl ? (
+                  <QRCodeCanvas value={solanaUrl} size={256} />
+                ) : (
+                  <Text>Loading...</Text>
+                )}
               </Box>
             </>
           )}
